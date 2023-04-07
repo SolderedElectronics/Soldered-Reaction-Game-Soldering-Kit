@@ -105,7 +105,7 @@ int main(void) {
 
 	// Wait four seconds before initializing debug pin SWDIO as an analog read
 	// So the device can be reprogrammed (development mode)
-	//HAL_Delay(8000);
+	HAL_Delay(8000);
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
