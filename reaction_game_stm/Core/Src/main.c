@@ -13,7 +13,6 @@
  * @authors     Robert Soric for soldered.com
  ***************************************************/
 /* USER CODE END Header */
-/* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
@@ -46,16 +45,14 @@ GPIO_TypeDef *portList[] = {
 LED_1_BLUE_GPIO_Port,
 LED_2_YELLOW_GPIO_Port,
 LED_3_GREEN_GPIO_Port,
-LED_4_RED_GPIO_Port
-};
+LED_4_RED_GPIO_Port };
 
 // List of pins, used for GPIO writes
 uint16_t pinList[] = {
 LED_1_BLUE_Pin,
 LED_2_YELLOW_Pin,
 LED_3_GREEN_Pin,
-LED_4_RED_Pin
-};
+LED_4_RED_Pin };
 
 // Variables which remember the state of the game
 uint8_t score = 0;
@@ -105,7 +102,7 @@ int main(void) {
 
 	// Wait four seconds before initializing debug pin SWDIO as an analog read
 	// So the device can be reprogrammed (development mode)
-	HAL_Delay(8000);
+	HAL_Delay(4000);
 	/* USER CODE END SysInit */
 
 	/* Initialize all configured peripherals */
@@ -183,7 +180,7 @@ void SystemClock_Config(void) {
 	 */
 	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-	RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV4;
+	RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV32;
 	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
 		Error_Handler();
@@ -229,7 +226,7 @@ static void MX_ADC1_Init(void) {
 	/** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
 	 */
 	hadc1.Instance = ADC1;
-	hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+	hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
 	hadc1.Init.Resolution = ADC_RESOLUTION_12B;
 	hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
 	hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;

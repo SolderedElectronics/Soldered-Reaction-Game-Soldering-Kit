@@ -1,10 +1,15 @@
-/*
- * game.c
+/**
+ **************************************************
  *
- *  Created on: Feb 15, 2023
- *      Author: Robert for Soldered.com
- */
-
+ * @file        game.c
+ * @brief       Game specific STM32 code for Reaction Game
+ *              Soldering Kit from Soldered.
+ *
+ * @note        In order to successfully run this code, make sure to use STM32 cube programmer
+ * 				And set Option Bytes -> User Configuration -> NRST_MODE 2
+ *
+ * @authors     Robert Soric for soldered.com
+ ***************************************************/
 #include "game.h"
 
 /**
@@ -80,6 +85,7 @@ void showStartAnimation(GPIO_TypeDef *portList[], uint16_t *pinList) {
 			HAL_Delay(100);
 		}
 	}
+	setPinsAsInputs();
 	HAL_Delay(1000);
 }
 
@@ -110,6 +116,7 @@ void showSequence(ADC_HandleTypeDef *hadc, uint8_t *secretKey,
 	for (int i = 0; i < 4; i++) {
 		HAL_GPIO_WritePin(portList[i], pinList[i], GPIO_PIN_SET);
 	}
+	setPinsAsInputs();
 }
 
 /**
@@ -120,26 +127,32 @@ void showSequence(ADC_HandleTypeDef *hadc, uint8_t *secretKey,
  * @returns			A uint8_t of values 0, 1, 2 or 3, generated randomly
  */
 uint8_t calculateNewRandom(ADC_HandleTypeDef *hadc) {
-
+	setPinsAsInputs();
 	uint16_t seed;
 	uint8_t temp;
 	int i;
 	//Get the data
+	HAL_Delay(1);
+
+	// Make 25 readings of noise on ADC pin and shuffle their bits
 	for (i = 0; i < 25; i++) {
+		// Randomly delay last couple of measurements by 3 ms max
+		if(i > 22) HAL_Delay(temp & 0b00000011);
 		seed ^= HAL_ADC_GetValue(hadc);
+		//Shuffle the seed
+		seed = 2053 * seed + 13849;
+		//XOR two bytes
+		temp = seed ^ (seed >> 8);
+		//XOR two nibbles
+		temp ^= (temp >> 4);
 	}
-	//Shuffle the seed
-	seed = 2053 * seed + 13849;
-	//XOR two bytes
-	temp = seed ^ (seed >> 8);
-	//XOR two nibbles
-	temp ^= (temp >> 4);
+
 	//XOR two pairs of bits and return remainder after division by 4
 	return (temp ^ (temp >> 2)) & 0b00000011;
 }
 
 /**
- * @brief			Calculate a random number in range 0-3
+ * @brief			Calculate a random number in a given range
  *
  * @params			ADC_HandleTypeDef *hadc: Pointer to ADC object to read noise from ADC to generate a random number
  *
@@ -153,18 +166,20 @@ uint16_t calculateNewRandomInRange(ADC_HandleTypeDef *hadc, uint16_t range) {
 	uint16_t seed;
 	uint16_t temp;
 	int i;
-	//Get the data
+
+	HAL_Delay(1);
+	// Make 25 readings of noise on ADC pin and shuffle their bits
 	for (i = 0; i < 25; i++) {
+		// Randomly delay last couple of measurements by 3 ms max
+		if(i > 22) HAL_Delay(temp & 0b00000011);
 		seed ^= HAL_ADC_GetValue(hadc);
+		//Shuffle the seed
+		seed = 2053 * seed + 13849;
+		//XOR two bytes
+		temp = seed ^ (seed >> 8);
+		//XOR two nibbles
+		temp ^= (temp >> 4);
 	}
-	//Shuffle the seed
-	seed = 2053 * seed + 13849;
-	//XOR two bytes
-	temp = seed ^ (seed >> 16);
-	//XOR two nibbles
-	temp ^= (temp >> 8);
-	//XOR four pairs of bits
-	temp = (temp ^ (temp >> 4));
 
 	// Return random number in range
 	return (uint16_t) (range * ((float) temp / (float) 0xFFFF));
@@ -190,7 +205,6 @@ uint8_t getKeys(uint16_t conutdown, uint16_t reactionTime, uint8_t secretKey,
 	uint8_t _b;
 	int i;
 	conutdown = reactionTime;
-	setPinsAsInputs();
 	do {
 		_b = getButtons(portList, pinList);
 		conutdown--;
@@ -220,7 +234,6 @@ uint8_t getKeys(uint16_t conutdown, uint16_t reactionTime, uint8_t secretKey,
  */
 uint8_t getButtons(GPIO_TypeDef *portList[], uint16_t *pinList) {
 	uint8_t _buttons = 0;
-	setPinsAsInputs();
 
 	for (int i = 0; i < 4; i++) {
 		int pinState = HAL_GPIO_ReadPin(portList[i], pinList[i]);
@@ -252,6 +265,7 @@ void showFailAnimation(GPIO_TypeDef *portList[], uint16_t *pinList) {
 		}
 		HAL_Delay(250);
 	}
+	setPinsAsInputs();
 }
 
 /**
@@ -269,26 +283,27 @@ void showResult(uint8_t _r, GPIO_TypeDef * portList[], uint16_t  * pinList) {
 	setPinsAsOutputs();
 	_blinks = _r / 100;
 	for (i = 0; i < _blinks; i++) {
-		HAL_GPIO_WritePin(portList[2], pinList[2], GPIO_PIN_SET);
-		HAL_Delay(SCORE_BLINK_ON);
 		HAL_GPIO_WritePin(portList[2], pinList[2], GPIO_PIN_RESET);
+		HAL_Delay(SCORE_BLINK_ON);
+		HAL_GPIO_WritePin(portList[2], pinList[2], GPIO_PIN_SET);
 		HAL_Delay(SCORE_BLINK_OFF);
 	}
 
 	_blinks = _r / 10 % 10;
 	for (i = 0; i < _blinks; i++) {
-		HAL_GPIO_WritePin(portList[1], pinList[1], GPIO_PIN_SET);
-		HAL_Delay(SCORE_BLINK_ON);
 		HAL_GPIO_WritePin(portList[1], pinList[1], GPIO_PIN_RESET);
+		HAL_Delay(SCORE_BLINK_ON);
+		HAL_GPIO_WritePin(portList[1], pinList[1], GPIO_PIN_SET);
 		HAL_Delay(SCORE_BLINK_OFF);
 	}
 
 	_blinks = _r % 10;
 	for (i = 0; i < _blinks; i++) {
-		HAL_GPIO_WritePin(portList[0], pinList[0], GPIO_PIN_SET);
-		HAL_Delay(SCORE_BLINK_ON);
 		HAL_GPIO_WritePin(portList[0], pinList[0], GPIO_PIN_RESET);
+		HAL_Delay(SCORE_BLINK_ON);
+		HAL_GPIO_WritePin(portList[0], pinList[0], GPIO_PIN_SET);
 		HAL_Delay(SCORE_BLINK_OFF);
 	}
+	setPinsAsInputs();
 }
 
